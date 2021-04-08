@@ -1,5 +1,19 @@
 {% extends "network/layout.html" %}
 
 {% block body %}
-    TODO
+    <form class="p-2" method="POST" action="{% url "create" %}">
+        {% csrf_token %}
+        <label for="msg" class="form-label">New Post</label>
+        <textarea class="form-control" placeholder="Things to share?" name="body" id="msg" rows="5"></textarea>
+        <div class="text-right py-2">
+            <button type="submit" class="btn btn-primary rounded-pill p-2">Submit</button>
+        </div>
+    </form>
+    {% for post in posts %}
+    <div class="card my-5 p-3">
+    <p>{{post.body}}</p>
+    <p>{{post.post_date|timesince}} ago by {{post.user}}</p>
+    TODO LIKES EDIT
+    </div>
+    {% endfor%}
 {% endblock %}

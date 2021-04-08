@@ -1,0 +1,12 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    PROFILE {{profile}}
+    {% for post in posts %}
+    <div class="card my-5 p-3">
+    <p>{{post.body}}</p>
+    <p>{{post.post_date|timesince}} ago by {{post.user}}</p>
+    TODO LIKES EDIT
+    </div>
+    {% endfor%}
+{% endblock %}
