@@ -85,8 +85,9 @@ def create(request):
 # PROFILE
 def profile(request, user_id):
     profile = Profile.objects.get(user_id=user_id)
+    posts = Post.objects.filter(user_id=user_id)
     if request.method == "POST":
         return True
     else:
-        context = {"profile": profile}
+        context = {"profile": profile, "posts": posts}
         return render(request, "network/profile.html", context)
