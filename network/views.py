@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 
-from .models import User, Post, Profile, Follow, Likes
+from .models import User, Post, Profile, Likes
 
 
 def index(request):
@@ -81,13 +81,49 @@ def create(request):
     return redirect("/")
     # return JsonResponse({"message": "Post created successfully"}, status=201)
 
+# edit
+@login_required
+def edit(request, post_id):
+    if request.user == post.user:
+        post = Post.objects.get(id=post_id)
+        if request.method == "POST":
+            edit_body = request.POST.get("body")
+            edited_post = POST(user=request.user, body=body)
+            edited_post.save()
+            return redirect("/")
+        context = {"post": post}
+    return redirect("/")
+
+
 
 # PROFILE
 def profile(request, user_id):
     profile = Profile.objects.get(user_id=user_id)
     posts = Post.objects.filter(user_id=user_id)
+    following = list(profile.following.all())
+    follower = Profile.objects.filter(following=profile.user)
     if request.method == "POST":
         return True
     else:
-        context = {"profile": profile, "posts": posts}
+        context = {"profile": profile, "posts": posts, "following": following, "follower": follower}
         return render(request, "network/profile.html", context)
+
+# FOLLOW
+@login_required
+def follow(request, user_id):
+    # following_user = Profile.objects.get(user_id=user_id)
+    # print(following_user.id)
+    # request.user.profile.following.add(following_user.user)
+    request.user.profile.following.add(user_id)
+    return redirect("/")
+
+
+# FOLLOWING PAGE
+def following(request):
+    profile = Profile.objects.get(user=request.user)
+    following = list(profile.following.all())
+    print(following)
+    posts = Post.objects.filter(user__in=following)
+    print(posts)
+    context = {"posts": posts}
+    return render(request, "network/index.html", context)

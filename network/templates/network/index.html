@@ -1,6 +1,7 @@
 {% extends "network/layout.html" %}
 
 {% block body %}
+    {% if user.is_authenticated %}
     <form class="p-2" method="POST" action="{% url "create" %}">
         {% csrf_token %}
         <label for="msg" class="form-label">New Post</label>
@@ -9,11 +10,14 @@
             <button type="submit" class="btn btn-primary rounded-pill p-2">Submit</button>
         </div>
     </form>
+    {% endif %}
+    <!-- DISPLAY POST HERE -->
     {% for post in posts %}
-    <div class="card my-5 p-3">
-    <p>{{post.body}}</p>
-    <p>{{post.post_date|timesince}} ago by <a href="./profile/{{post.user.id}}">{{post.user}}</a></p>
-    TODO LIKES EDIT
+    <div class="card my-5 p-3" id="post-card-{{post.id}}">
+    <p id="post-body-{{post.id}}">{{post.body}}</p>
+    <p>submitted {{post.post_date|timesince}} ago by <a href="./profile/{{post.user.id}}">{{post.user}}</a> on {{post.post_date}}</p>
+    <button type="button" class="btn btn-outline-danger m-1">Likes</button> 
+    {% if request.user.id == post.user.id %} <button type="button" class="btn btn-outline-primary m-1">Edit</button>{% endif %}
     </div>
     {% endfor%}
 {% endblock %}
