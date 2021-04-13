@@ -10,21 +10,21 @@
     <body>
 
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="{% url 'index' %}">Network</a>
+            <a class="navbar-brand" id="index" href="{% url 'index' %}">Network</a>
 
             <div>
               <ul class="navbar-nav mr-auto">
                 {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'profile' user.id %}"><strong>{{ user.username }}</strong></a>
+                        <a class="nav-link" id="profile" href="{% url 'profile' user.id %}"><strong>{{ user.username }}</strong></a>
                     </li>
                 {% endif %}
                 <li class="nav-item">
-                  <a class="nav-link" href="{% url 'index' %}">All Posts</a>
+                  <a class="nav-link" id="index" href="{% url 'index' %}">All Posts</a>
                 </li>
                 {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'following'%}">Following</a>
+                        <a class="nav-link" id="following" href="{% url 'following'%}">Following</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}">Log Out</a>
@@ -41,7 +41,7 @@
             </div>
           </nav>
 
-        <div class="body container">
+        <div class="body container p-5">
             {% block body %}
             {% endblock %}
         </div>

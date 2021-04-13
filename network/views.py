@@ -5,13 +5,14 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 
-from .models import User, Post, Profile, Likes
+from .models import User, Post, Profile
 
 
 def index(request):
     posts = Post.objects.all().order_by("-post_date")
     context = {"posts": posts}
     return render(request, "network/index.html", context)
+    
 
 
 def login_view(request):
@@ -95,35 +96,49 @@ def edit(request, post_id):
     return redirect("/")
 
 
+@login_required
+# ALL FOLLOWING PAGE
+def following(request):
+    profile = Profile.objects.get(user=request.user)
+    following = list(profile.following.all())
+    posts = Post.objects.filter(user__in=following)
+    context = {"posts": posts}
+    return render(request, "network/following.html", context)
+
 
 # PROFILE
 def profile(request, user_id):
-    profile = Profile.objects.get(user_id=user_id)
-    posts = Post.objects.filter(user_id=user_id)
-    following = list(profile.following.all())
-    follower = Profile.objects.filter(following=profile.user)
-    if request.method == "POST":
-        return True
-    else:
+    if request.user.is_authenticated:
+        profile = Profile.objects.get(user_id=user_id)
+        posts = Post.objects.filter(user_id=user_id)
+        following = list(profile.following.all())
+        follower = Profile.objects.filter(following=profile.user)
         context = {"profile": profile, "posts": posts, "following": following, "follower": follower}
         return render(request, "network/profile.html", context)
+    else:
+        return HttpResponseRedirect(reverse("login"))
+
 
 # FOLLOW
 @login_required
 def follow(request, user_id):
-    # following_user = Profile.objects.get(user_id=user_id)
-    # print(following_user.id)
-    # request.user.profile.following.add(following_user.user)
-    request.user.profile.following.add(user_id)
+    if request.user.id != user_id:
+        following = request.user.profile.following.all()
+        if "admin" in following:
+            print("already followed")
+        else:
+            request.user.profile.following.add(user_id)
     return redirect("/")
 
 
-# FOLLOWING PAGE
-def following(request):
-    profile = Profile.objects.get(user=request.user)
-    following = list(profile.following.all())
-    print(following)
-    posts = Post.objects.filter(user__in=following)
-    print(posts)
-    context = {"posts": posts}
-    return render(request, "network/index.html", context)
+# LIKES
+@login_required
+def likes(request, post_id):
+    post = Post.objects.get(id=post_id)
+    if request.user in post.likes.all():
+        post.likes.remove(request.user)
+    else:
+        post.likes.add(request.user.id)
+    count = post.likes.count()
+    context = {"likes": count}
+    return redirect("/") 
