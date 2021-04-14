@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .models import User, Post, Profile
 
@@ -13,32 +14,53 @@ from .models import User, Post, Profile
 def index(request):
     return render(request, "network/index.html")
 
+
 def posts(request, page):
-    print(page)
     if page == "main":
         posts = Post.objects.all().order_by("-post_date")
         data = [post.serialize() for post in posts] 
+        paginator = Paginator(data, 10)
+        return JsonResponse(list(paginator.object_list), safe=False)
+    elif page == "following" and request.user.is_authenticated:
+        profile = Profile.objects.get(user=request.user)
+        following = list(profile.following.all())
+        posts = Post.objects.filter(user__in=following)
+        data = [post.serialize() for post in posts] 
         return JsonResponse(data, safe=False)
-    elif page == "following":
-        if request.user.is_authenticated:
-            profile = Profile.objects.get(user=request.user)
-            following = list(profile.following.all())
-            posts = Post.objects.filter(user__in=following)
-            data = [post.serialize() for post in posts] 
-            return JsonResponse(data, safe=False)
-    elif page == "profile":
-        if request.user.is_authenticated:
-            profile = Profile.objects.get(user_id=request.user.id)
-            posts = Post.objects.filter(user_id=request.user.id)
-            data = [post.serialize() for post in posts] 
-            return JsonResponse(data, safe=False)
     else:
         return HttpResponseRedirect(reverse("login"))
 
 
+# PROFILE
+def profile(request, user_id):
+    if request.user.is_authenticated:
+        if request.method == "GET":
+            profile = Profile.objects.get(user_id=user_id)
+            posts = Post.objects.filter(user_id=user_id)
+            data = [post.serialize() for post in posts]
+            return JsonResponse(data, safe=False)
+    return HttpResponseRedirect(reverse("login"))
+
+
+# GET FOLLOWER COUNT
+def followers(request, user_id):
+    if request.user.is_authenticated:
+        profile = Profile.objects.get(user_id=user_id)
+        follower = Profile.objects.filter(following=profile.user)
+        print(int(len(follower)))
+        return JsonResponse({"followers": int(len(follower))})
+
+
+# GET FOLLOWING COUNT
+def followings(request, user_id):
+    if request.user.is_authenticated:
+        profile = Profile.objects.get(user_id=user_id)
+        following = profile.following.all()
+        return JsonResponse({"followings": int(len(following))})
+
+
 def login_view(request):
     if request.method == "POST":
-
         # Attempt to sign user in
         username = request.POST["username"]
         password = request.POST["password"]
@@ -87,21 +109,20 @@ def register(request):
     else:
         return render(request, "network/register.html")
 
-# POSTS
-# new post
+
+# CREATE NEW POST
 @login_required
 def create(request):
-
     # Must be request via POST
     if request.method != "POST":
         return JsonResponse({"error": "POST request only."}, status=400)
-
     # Create new post
     body = request.POST.get("body")
     post = Post(user=request.user, body=body)
     post.save()
     return redirect("/")
     # return JsonResponse({"message": "Post created successfully"}, status=201)
+
 
 # EDIT
 @csrf_exempt
@@ -117,30 +138,8 @@ def edit(request, post_id):
     return HttpResponse(status=403)
 
 
-@login_required
-# ALL FOLLOWING PAGE
-def following(request):
-    profile = Profile.objects.get(user=request.user)
-    following = list(profile.following.all())
-    posts = Post.objects.filter(user__in=following)
-    context = {"posts": posts}
-    return render(request, "network/following.html", context)
-
-
-# PROFILE
-def profile(request, user_id):
-    if request.user.is_authenticated:
-        profile = Profile.objects.get(user_id=user_id)
-        posts = Post.objects.filter(user_id=user_id)
-        following = list(profile.following.all())
-        follower = Profile.objects.filter(following=profile.user)
-        context = {"profile": profile, "posts": posts, "following": following, "follower": follower}
-        return render(request, "network/profile.html", context)
-    else:
-        return HttpResponseRedirect(reverse("login"))
-
-
 # FOLLOW
+@csrf_exempt
 @login_required
 def follow(request, user_id):
     if request.method == "PUT":
@@ -153,6 +152,14 @@ def follow(request, user_id):
             else:
                 request.user.profile.following.add(user_id)
                 return JsonResponse({"msg": "Unfollow"})
+    if request.method == "GET":
+        user = User.objects.get(id=user_id)
+        following = request.user.profile.following.all()
+        print('here')
+        if user in following:
+            return JsonResponse({"msg": "Unfollow"})
+        else:
+            return JsonResponse({"msg": "Follow"})
     return redirect("/")
 
 

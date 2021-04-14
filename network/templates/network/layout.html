@@ -16,14 +16,14 @@
             <a class="navbar-brand" href="{% url 'index' %}">Network</a>
             <p id="current_user_id" class="d-none">{{user.id}}</p>
             <div>
-              <ul class="navbar-nav mr-auto">
+                <ul class="navbar-nav mr-auto">
                 {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" id="profile"><strong>{{ user.username }}</strong></a>
+                        <a class="nav-link" id="my-profile"><strong id="current_username">{{ user.username }}</strong></a>
                     </li>
                 {% endif %}
                 <li class="nav-item">
-                  <a class="nav-link" id="front-page"">All Posts</a>
+                    <a class="nav-link" id="front-page"">All Posts</a>
                 </li>
                 {% if user.is_authenticated %}
                     <li class="nav-item">
@@ -40,9 +40,9 @@
                         <a class="nav-link" href="{% url 'register' %}">Register</a>
                     </li>
                 {% endif %}
-              </ul>
+                </ul>
             </div>
-          </nav>
+        </nav>
 
         <div class="body container p-5">
             {% block body %}
