@@ -2,7 +2,12 @@
 {% load static %}
 
 {% block body %}
+
     {% if user.is_authenticated %}
+    <div id="profile-view">
+        <h3>profile</h3> 
+
+    </div>
     <div id="create-view">
         <form class="p-2" method="POST" action="{% url "create" %}">
             {% csrf_token %}
@@ -22,19 +27,10 @@
         </div>
         {% endif %}
         <!-- DISPLAY POST HERE -->
-        {% for post in posts %}
-        <div class="card my-5 p-3" id="post-card-{{post.id}}">
-            <p id="post-body-{{post.id}}">{{post.body}}</p>
-            <p>submitted {{post.post_date|timesince}} ago by <a href="{% url 'profile' post.user.id %}">{{post.user}}</a> on {{post.post_date}}</p>
-            <div class="text-right">
-                {% if request.user.id == post.user.id %} <a href="{% url 'edit' post.id %}"><button type="button" class="btn btn-outline-primary m-1" id="edit-btn">Edit</button></a>{% endif %}
-                <a href="{% url 'likes' post.id %}"><button type="button" class="btn btn-outline-danger m-1" id="like-btn">{{post.likes.count}} Likes</button> </a>
-            </div>
-        </div>
-        {% endfor%}
+
     </div>
 {% endblock %}
 
 {% block script %}
-    <script src="{% static 'network/main.js' %}"></script>
+    
 {% endblock %}

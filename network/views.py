@@ -1,18 +1,39 @@
+import json
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import User, Post, Profile
 
 
 def index(request):
-    posts = Post.objects.all().order_by("-post_date")
-    context = {"posts": posts}
-    return render(request, "network/index.html", context)
-    
+    return render(request, "network/index.html")
+
+def posts(request, page):
+    print(page)
+    if page == "main":
+        posts = Post.objects.all().order_by("-post_date")
+        data = [post.serialize() for post in posts] 
+        return JsonResponse(data, safe=False)
+    elif page == "following":
+        if request.user.is_authenticated:
+            profile = Profile.objects.get(user=request.user)
+            following = list(profile.following.all())
+            posts = Post.objects.filter(user__in=following)
+            data = [post.serialize() for post in posts] 
+            return JsonResponse(data, safe=False)
+    elif page == "profile":
+        if request.user.is_authenticated:
+            profile = Profile.objects.get(user_id=request.user.id)
+            posts = Post.objects.filter(user_id=request.user.id)
+            data = [post.serialize() for post in posts] 
+            return JsonResponse(data, safe=False)
+    else:
+        return HttpResponseRedirect(reverse("login"))
 
 
 def login_view(request):
@@ -82,18 +103,18 @@ def create(request):
     return redirect("/")
     # return JsonResponse({"message": "Post created successfully"}, status=201)
 
-# edit
+# EDIT
+@csrf_exempt
 @login_required
 def edit(request, post_id):
+    post = Post.objects.get(id=post_id)
     if request.user == post.user:
-        post = Post.objects.get(id=post_id)
-        if request.method == "POST":
-            edit_body = request.POST.get("body")
-            edited_post = POST(user=request.user, body=body)
-            edited_post.save()
-            return redirect("/")
-        context = {"post": post}
-    return redirect("/")
+        if request.method == "PUT":
+            edit_body = json.loads(request.body)
+            post.body = edit_body["body"]
+            post.save()
+            return HttpResponse(status=204)
+    return HttpResponse(status=403)
 
 
 @login_required
@@ -122,23 +143,28 @@ def profile(request, user_id):
 # FOLLOW
 @login_required
 def follow(request, user_id):
-    if request.user.id != user_id:
-        following = request.user.profile.following.all()
-        if "admin" in following:
-            print("already followed")
-        else:
-            request.user.profile.following.add(user_id)
+    if request.method == "PUT":
+        if request.user.id != user_id:
+            user = User.objects.get(id=user_id)
+            following = request.user.profile.following.all()
+            if user in following:
+                request.user.profile.following.remove(user_id)
+                return JsonResponse({"msg": "Follow"})
+            else:
+                request.user.profile.following.add(user_id)
+                return JsonResponse({"msg": "Unfollow"})
     return redirect("/")
 
 
 # LIKES
+@csrf_exempt
 @login_required
 def likes(request, post_id):
-    post = Post.objects.get(id=post_id)
-    if request.user in post.likes.all():
-        post.likes.remove(request.user)
-    else:
-        post.likes.add(request.user.id)
-    count = post.likes.count()
-    context = {"likes": count}
-    return redirect("/") 
+    if request.method == "PUT":
+        post = Post.objects.get(id=post_id)
+        if request.user in post.likes.all():
+            post.likes.remove(request.user)
+        else:
+            post.likes.add(request.user.id)
+        count = post.likes.count()
+        return JsonResponse({"likes": count})

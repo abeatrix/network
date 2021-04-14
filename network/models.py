@@ -29,6 +29,16 @@ class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     likes = models.ManyToManyField(User, symmetrical=False, blank=True, related_name="likes")
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user": self.user.username,
+            "user_id": self.user.id,
+            "body": self.body,
+            "likes": [user.profile.id for user in self.likes.all()],
+            "post_date": self.post_date.strftime("%b %d %Y, %I:%M %p"),
+        }
+
     def __str__(self):
         return self.body
 
