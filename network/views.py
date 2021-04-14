@@ -1,16 +1,22 @@
+import json
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator
 
 from .models import User, Post, Profile
 
 
 def index(request):
     posts = Post.objects.all().order_by("-post_date")
-    context = {"posts": posts}
+    paginator = Paginator(posts, 10)
+    page = request.GET.get('page')
+    data = paginator.get_page(page)
+    context = {"posts": data}
     return render(request, "network/index.html", context)
     
 
@@ -83,17 +89,17 @@ def create(request):
     # return JsonResponse({"message": "Post created successfully"}, status=201)
 
 # edit
+@csrf_exempt
 @login_required
 def edit(request, post_id):
+    post = Post.objects.get(id=post_id)
     if request.user == post.user:
-        post = Post.objects.get(id=post_id)
-        if request.method == "POST":
-            edit_body = request.POST.get("body")
-            edited_post = POST(user=request.user, body=body)
-            edited_post.save()
-            return redirect("/")
-        context = {"post": post}
-    return redirect("/")
+        if request.method == "PUT":
+            edit_body = json.loads(request.body)
+            post.body = edit_body["body"]
+            post.save()
+            return HttpResponse(status=204)
+    return HttpResponse(status=403)
 
 
 @login_required
@@ -132,13 +138,13 @@ def follow(request, user_id):
 
 
 # LIKES
+@csrf_exempt
 @login_required
 def likes(request, post_id):
-    post = Post.objects.get(id=post_id)
-    if request.user in post.likes.all():
-        post.likes.remove(request.user)
-    else:
-        post.likes.add(request.user.id)
-    count = post.likes.count()
-    context = {"likes": count}
-    return redirect("/") 
+    if request.method == "PUT":
+        post = Post.objects.get(id=post_id)
+        if request.user in post.likes.all():
+            post.likes.remove(request.user)
+        else:
+            post.likes.add(request.user.id)
+        return JsonResponse({"likes": post.likes.count()})

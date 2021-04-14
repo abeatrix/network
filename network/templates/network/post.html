@@ -1,0 +1,69 @@
+<div class="card my-5 p-3" id="post-card-{{post.id}}">
+    <p id="post-body-{{post.id}}">{{post.body}}</p>
+    <p>submitted {{post.post_date|timesince}} ago by <a id="profile-{{post.id}}" href="{% url 'profile' post.user.id %}">{{post.user}}</a> on {{post.post_date}}</p>
+    <div id="btns-{{post.id}}" class="text-right">
+        {% if request.user.id == post.user.id %} 
+            <button type="button" class="btn btn-outline-primary m-1" id="edit-btn-{{post.id}}">Edit</button>
+        {% endif %}
+        <button type="button" class="btn btn-outline-danger m-1" id="like-btn-{{post.id}}"><b id="likes-count-{{post.id}}">{{post.likes|length}}</b> Likes</button>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        console.log("{{post.likes}}")
+        {% if request.user.id == post.user.id %} 
+            document.querySelector('#edit-btn-{{post.id}}').addEventListener('click', () => go_edit("{{post.id}}"));
+        {% endif %}
+        document.querySelector('#like-btn-{{post.id}}').addEventListener('click', () => go_like("{{post.id}}"));
+    });
+
+    function go_edit(post_id){
+        const body = document.querySelector(`#post-body-{{post.id}}`);
+        const edit_textarea = document.createElement('textarea');
+        edit_textarea.id = 'edit-textarea-{{post.id}}';
+        edit_textarea.value = body.innerHTML
+        body.parentNode.replaceChild(edit_textarea, body)
+
+        // create submit edit button and add to buttons div
+        const btns_div = document.querySelector(`#btns-{{post.id}}`);
+        const submit_btn = document.createElement('button');
+        submit_btn.id = 'submit-btn-{{post.id}}';
+        submit_btn.className = 'btn btn-success m-1';
+        submit_btn.innerHTML = 'Submit Edit';
+        btns_div.append(submit_btn)
+
+        // when the submit edit button is clicked
+        submit_btn.addEventListener('click', () => {
+            const edited_body = document.querySelector(`#edit-textarea-{{post.id}}`).value;
+            fetch('/edit/{{post.id}}', {
+                method: 'PUT', 
+                body: JSON.stringify({
+                    body: edited_body
+                })
+            })
+            .then(()=>{
+                body.innerHTML = edited_body;
+                edit_textarea.parentNode.replaceChild(body, edit_textarea)
+                submit_btn.remove()
+            })
+            .then(res=>console.log(res))
+            .catch(err=>console.log(err));
+        })
+    }
+
+    function go_like(post_id){
+        // select like number element by id
+        const l = document.querySelector(`#likes-count-{{post.id}}`);
+        // perform
+        fetch('/likes/{{post.id}}', {
+            method: 'PUT',
+        })
+        .then(res=>res.json())
+        .then(data=>{
+            l.innerHTML = data.likes;
+        })
+        .catch(err=>console.log(err));
+    }
+</script>

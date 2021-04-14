@@ -27,21 +27,7 @@ class Post(models.Model):
     body = models.CharField(max_length=250)
     post_date = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    likes = models.ManyToManyField(User, symmetrical=False, blank=True, related_name="likes")
+    likes = models.ManyToManyField(User, symmetrical=False, default=0, related_name="likes")
 
     def __str__(self):
         return self.body
-
-# class Likes(models.Model):
-#     user = models.ManyToManyField(User, blank=True)
-#     post = models.OneToOneField(Post, on_delete=models.CASCADE, related_name="likes")
-
-#     def __str__(self):
-#         return self.post.user.username
-
-# # Create Likes when Post is created
-# @receiver(post_save, sender=Post)
-# def create_likes(sender, instance, created, **kwargs):
-#     if created:
-#         Likes.objects.create(post=instance)
-#     instance.likes.save()

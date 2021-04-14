@@ -23,16 +23,17 @@
         {% endif %}
         <!-- DISPLAY POST HERE -->
         {% for post in posts %}
-        <div class="card my-5 p-3" id="post-card-{{post.id}}">
-            <p id="post-body-{{post.id}}">{{post.body}}</p>
-            <p>submitted {{post.post_date|timesince}} ago by <a href="{% url 'profile' post.user.id %}">{{post.user}}</a> on {{post.post_date}}</p>
-            <div class="text-right">
-                {% if request.user.id == post.user.id %} <a href="{% url 'edit' post.id %}"><button type="button" class="btn btn-outline-primary m-1" id="edit-btn">Edit</button></a>{% endif %}
-                <a href="{% url 'likes' post.id %}"><button type="button" class="btn btn-outline-danger m-1" id="like-btn">{{post.likes.count}} Likes</button> </a>
-            </div>
-        </div>
+            {% include 'network/post.html' %}
         {% endfor%}
     </div>
+    <!--PAGINATION-->
+    {% if posts.has_previous %}
+        <a href="?page={{posts.previous_page_number}}">previous</a> 
+    {% endif %}
+    {% if posts.has_next %}
+        <a href="?page={{posts.next_page_number}}">next</a>
+        <a href="?page={{posts.paginator.num_pages}}">last</a>
+    {% endif %}
 {% endblock %}
 
 {% block script %}
