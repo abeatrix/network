@@ -26,14 +26,7 @@
             {% include 'network/post.html' %}
         {% endfor%}
     </div>
-    <!--PAGINATION-->
-    {% if posts.has_previous %}
-        <a href="?page={{posts.previous_page_number}}">previous</a> 
-    {% endif %}
-    {% if posts.has_next %}
-        <a href="?page={{posts.next_page_number}}">next</a>
-        <a href="?page={{posts.paginator.num_pages}}">last</a>
-    {% endif %}
+    {% include 'network/pagination.html' %}
 {% endblock %}
 
 {% block script %}

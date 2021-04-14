@@ -126,14 +126,26 @@ def profile(request, user_id):
 
 
 # FOLLOW
+@csrf_exempt
 @login_required
 def follow(request, user_id):
-    if request.user.id != user_id:
+    if request.method == "PUT":
+        if request.user.id != user_id:
+            user = User.objects.get(id=user_id)
+            following = request.user.profile.following.all()
+            if user in following:
+                request.user.profile.following.remove(user_id)
+                return JsonResponse({"msg": "Follow"})
+            else:
+                request.user.profile.following.add(user_id)
+                return JsonResponse({"msg": "Unfollow"})
+    if request.method == "GET":
+        user = User.objects.get(id=user_id)
         following = request.user.profile.following.all()
-        if "admin" in following:
-            print("already followed")
+        if user in following:
+            return JsonResponse({"msg": "Unfollow"})
         else:
-            request.user.profile.following.add(user_id)
+            return JsonResponse({"msg": "Follow"})
     return redirect("/")
 
 
@@ -143,8 +155,12 @@ def follow(request, user_id):
 def likes(request, post_id):
     if request.method == "PUT":
         post = Post.objects.get(id=post_id)
+        print(post.likes.count())
         if request.user in post.likes.all():
             post.likes.remove(request.user)
+            count = post.likes.count()
+            return JsonResponse({"likes": count})
         else:
             post.likes.add(request.user.id)
-        return JsonResponse({"likes": post.likes.count()})
+            count = post.likes.count()
+            return JsonResponse({"likes": count})

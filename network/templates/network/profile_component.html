@@ -1,0 +1,51 @@
+<h3 id="profile-card-{{profile.id}}">{{profile}}'s profile</h3> 
+{% if request.user.id != profile.id %} 
+    <div class="text-right"><button id="follow-btn-{{profile.id}}" class="btn btn-primary mx-3">Follow</button></div> 
+{% endif %}
+<h5><strong id="following-num-{{profile.id}}">{{following|length}}</strong> following | <strong id="follower-num-{{profile.id}}">{{follower|length}}</strong> followers</h5>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        const profile_id = {{profile.id}}
+
+        {% if request.user.id != profile.id %} 
+            follow_status(profile_id)
+            document.querySelector('#follow-btn-{{profile.id}}').addEventListener('click', () => go_follow(profile_id));
+        {% endif %}
+    });
+
+    function go_follow(user_id){
+        // select follow button by element id
+        const f = document.querySelector(`#follow-btn-${user_id}`);
+        // select follow number by element id
+        const numElm = document.querySelector(`#follower-num-${user_id}`);
+        const num = parseInt(numElm.innerHTML)
+        // perform PUT
+        fetch('/follow/'+user_id, {
+            method: 'PUT',
+        })
+        .then(res=>res.json())
+        .then(data=>{
+            // update button text
+            f.innerHTML = data.msg
+            // update follower number
+            numElm.innerHTML = f.innerHTML === "Follow" ? num-1 : num+1;
+        })
+        .catch(err=>console.log(err));
+    }
+
+    function follow_status(user_id) {
+        // select follow button by element id
+        const f = document.querySelector(`#follow-btn-${user_id}`);
+        // perform GET
+        fetch('/follow/'+user_id, {
+            method: 'GET',
+        })
+        .then(res=>res.json())
+        .then(data=>{
+            // update button text
+            f.innerHTML = data.msg
+        })
+        .catch(err=>console.log(err));
+    }
+</script>
