@@ -113,7 +113,10 @@ def edit(request, post_id):
 @login_required
 def following(request):
     if request.method == "GET":
-        profile = Profile.objects.get(user=request.user)
+        try:
+            profile = Profile.objects.get(user=request.user)
+        except Profile.DoesNotExist:
+            JsonResponse({"error": "Cannot find user."}, status=400)
         following = list(profile.following.all())
         posts = Post.objects.filter(user__in=following).order_by("-post_date")
         context = {"posts": posts}
