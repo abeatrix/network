@@ -1,5 +1,5 @@
 <h3 id="profile-card-{{profile.id}}">{{profile}}'s profile</h3> 
-{% if request.user.id != profile.id %} 
+{% if request.user.id != profile.id and user.is_authenticated %} 
     <div class="text-right"><button id="follow-btn-{{profile.id}}" class="btn btn-primary mx-3">Follow</button></div> 
 {% endif %}
 <h5><strong id="following-num-{{profile.id}}">{{following|length}}</strong> following | <strong id="follower-num-{{profile.id}}">{{follower|length}}</strong> followers</h5>
@@ -8,7 +8,7 @@
     document.addEventListener("DOMContentLoaded", function(){
         const profile_id = {{profile.id}}
 
-        {% if request.user.id != profile.id %} 
+        {% if request.user.id != profile.id and user.is_authenticated %} 
             follow_status(profile_id)
             document.querySelector('#follow-btn-{{profile.id}}').addEventListener('click', () => go_follow(profile_id));
         {% endif %}
